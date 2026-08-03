@@ -2,3 +2,21 @@
 *.csv
 *.html
 *.txt
+__pycache__/
+*.egg-info/
+.DS_Store
+build/
+.venv/
+venv/
+pyenv/
+*.mexmaca64
+*.slxc
+*.slxc.autosave
+slprj/
+*.log
+*.asv
+*.html
+sting_log.txt
+*.csv
+# Ignore temp folder used for tests
+tests/tmpdir
