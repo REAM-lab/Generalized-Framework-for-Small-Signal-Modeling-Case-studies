@@ -2,14 +2,15 @@
 Compare the small-signal model response to the EMT response for small changes in the reference inputs.
 """
 
+# Import libraries
 import os
-
 from sting import datasets, main
 from sting.utils.dynamical_systems import smooth_step
 from sting.modules.simulation_emt.core import SimulationEMT
+from pathlib import Path
 
 # Location of all outputs
-case_directory = os.path.join(os.getcwd(), "validation")
+case_directory = os.path.join(Path(__file__).resolve().parent)
 
 # Load the WSCC 9 bus system from the default datasets in STING
 system = datasets.wscc_9(case_directory=case_directory)
@@ -20,9 +21,11 @@ system.apply("post_system_init", system)
 system, ssm = main.run_ssm(system=system, case_directory=case_directory)
 
 # Apply a small step to each input
-for generator in ['gfmi_18a_0', 'gfmi_18a_1', 'gfli_16a_0']:
+#for generator in ['gfmi_18a_0', 'gfmi_18a_1', 'gfli_16a_0']:
+for generator in ['gfmi_18a_0']:
     for reference in ['p_ref', 'q_ref']:
-        for amplitude in [0.01, 0.05, 0.1]:
+        #for amplitude in [0.01, 0.05, 0.1]:
+        for amplitude in [0.1]:
             # Location of all outputs
             output_directory = os.path.join(case_directory, "simulations", f"{generator}-{reference}-{int(100*amplitude)}")
             ssm_dir = os.path.join(output_directory, "ssm")
@@ -39,8 +42,10 @@ for generator in ['gfmi_18a_0', 'gfmi_18a_1', 'gfli_16a_0']:
 
             ssm.output_directory = ssm_dir
             ssm.simulate_ssm(t_max=t_max, inputs=inputs)
+
             # Run EMT simulation
-            system.case_directory = emt_dir
-            emt_sc = SimulationEMT(system=system)
+            emt_sc = SimulationEMT(system=system, 
+                                   power_flow_directory=os.path.join(case_directory, "outputs", "ac_power_flow"),
+                                   output_directory=emt_dir)
             emt_sc.sim(t_max, inputs)
             break
