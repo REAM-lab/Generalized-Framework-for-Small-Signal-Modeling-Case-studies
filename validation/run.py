@@ -24,10 +24,14 @@ system, ssm = main.run_ssm(system=system, case_directory=case_directory)
 
 # Apply a small step to each input
 for generator in ['gfmi_18a_0', 'gfli_16a_0']:
-    for reference in ['p_ref']:
-        for amplitude in [0.1]:
+    for reference in ['p_ref', 'q_ref']:
+        for amplitude in [-0.15, -0.10, -0.05, 0.05, 0.10, 0.15]:
             # Location of all outputs
-            output_directory = os.path.join(case_directory, "simulations", f"{generator}-{reference}-{int(100*amplitude)}")
+            if amplitude < 0:
+                file_name = f"{generator}-{reference}-minus-{int(100*abs(amplitude))}"
+            else:
+                file_name = f"{generator}-{reference}-plus-{int(100*abs(amplitude))}"
+            output_directory = os.path.join(case_directory, "simulations", file_name)
             ssm_dir = os.path.join(output_directory, "ssm")
             emt_dir = os.path.join(output_directory, "emt")
             os.makedirs(ssm_dir, exist_ok=True)
@@ -48,4 +52,4 @@ for generator in ['gfmi_18a_0', 'gfli_16a_0']:
                                    power_flow_directory=os.path.join(case_directory, "outputs", "ac_power_flow"),
                                    output_directory=emt_dir)
             emt_sc.sim(t_max, inputs)
-            break
+
