@@ -48,7 +48,7 @@ def wscc_9(case_directory=None):
     line_7_8 = LinePiModel(
         name="line_7_8", from_bus="bus_7", to_bus="bus_8", zone="external", base_power_MVA=100, base_voltage_kV=230, base_frequency_Hz=60, r_pu=0.0085, x_pu=0.072, g_pu=0, b_pu=0.149)
     line_8_2 = LinePiModel(
-        name="line_8_2", from_bus="bus_8", to_bus="bus_2", zone=None, base_power_MVA=100, base_voltage_kV=230, base_frequency_Hz=60, r_pu=0, x_pu=0.0625, g_pu=0, b_pu=0)
+        name="line_8_2", from_bus="bus_8", to_bus="bus_2", zone=None, base_power_MVA=100, base_voltage_kV=230, base_frequency_Hz=60, r_pu=0.001, x_pu=0.5, g_pu=0, b_pu=0)
     line_8_9 = LinePiModel(
         name="line_8_9", from_bus="bus_8", to_bus="bus_9", zone="external", base_power_MVA=100, base_voltage_kV=230, base_frequency_Hz=60, r_pu=0.032, x_pu=0.161, g_pu=0, b_pu=0.306)
     line_9_4 = LinePiModel(
@@ -96,13 +96,13 @@ def wscc_9(case_directory=None):
         rf1_pu=0.005, xf1_pu=0.15, csh_pu=0.066, rsh_pu=100,
         txr_power_MVA=100, txr_voltage1_kV=0.48, txr_voltage2_kV=230, txr_r1_pu=0.01, txr_x1_pu=0.1, txr_r2_pu=0.02, txr_x2_pu=0.1, 
         # Inner voltage controller
-        kp_vc_pu=0.562, ki_vc_puHz=484.989, kffi_vc=0.80,
+        kp_vc_pu=5, ki_vc_puHz=500, kffi_vc=0,
         # Inner current controller
         kp_cc_pu=4.77, ki_cc_puHz=60, kffv_cc=0,
         # Virtual inertia
-        h_s=2, kd_pu=70, 
+        h_s=0.15, kd_pu=0.1, 
         # Voltage droop
-        k_q_pu=0.2, w_q_puHz=4000
+        k_q_pu=0.05, w_q_puHz=2000
     )
 
     gfmi_2 = GFMI18A(
