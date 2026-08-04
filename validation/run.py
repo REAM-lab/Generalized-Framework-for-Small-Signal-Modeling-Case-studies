@@ -4,27 +4,27 @@ Compare the small-signal model response to the EMT response for small changes in
 
 # Import libraries
 import os
-from sting import datasets, main
+from sting import main
 from sting.utils.dynamical_systems import smooth_step
 from sting.modules.simulation_emt.core import SimulationEMT
 from pathlib import Path
+from wscc_9 import wscc_9
 
 # Location of all outputs
 case_directory = os.path.join(Path(__file__).resolve().parent)
 
 # Load the WSCC 9 bus system from the default datasets in STING
-system = datasets.wscc_9(case_directory=case_directory)
+system = wscc_9(case_directory=case_directory)
+
 # Apply any post initialization "updates" of system components
 system.apply("post_system_init", system)
 
-# Construct a small-signal model
+# Run AC power flow solution, build Component Connection matrices, and construct a small-signal model
 system, ssm = main.run_ssm(system=system, case_directory=case_directory)
 
 # Apply a small step to each input
-#for generator in ['gfmi_18a_0', 'gfmi_18a_1', 'gfli_16a_0']:
-for generator in ['gfmi_18a_0']:
-    for reference in ['p_ref', 'q_ref']:
-        #for amplitude in [0.01, 0.05, 0.1]:
+for generator in ['gfmi_18a_0', 'gfli_16a_0']:
+    for reference in ['p_ref']:
         for amplitude in [0.1]:
             # Location of all outputs
             output_directory = os.path.join(case_directory, "simulations", f"{generator}-{reference}-{int(100*amplitude)}")
