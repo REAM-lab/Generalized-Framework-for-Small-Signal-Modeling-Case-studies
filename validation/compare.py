@@ -82,6 +82,14 @@ plt.style.use(['science','ieee'])
 plt.rcParams['text.usetex'] = False
 plt.rc('font',**{'family':'serif','serif':['Times'], 'size': 7})
 plt.rcParams['axes.formatter.useoffset'] = False # this prevent scientific notation in y-axis
+ora = "#E57A73"
+blu = "#4A9FE0"
+gre = "#63B784" 
+linewidth = 0.80
+
+emt_color = ora
+ssm_color = blu
+
 
 # Plot 3 x 2:   (0,0) = GFM active power, (0,1) = GFL active power, 
 #               (1,0) = GFM bus voltage,  (1,1) = GFL bus voltage, 
@@ -93,81 +101,143 @@ fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(4.3, 4), sharex=True)
 # Plot active power for GFM and GFL
 t_emt = emt_data[('gfmi_18a_0', 'p_ref', 0.1)]["time"]
 y_emt = emt_data[('gfmi_18a_0', 'p_ref', 0.1)]["p"]
-ax[0, 0].plot(t_emt, y_emt, label='EMT', color='blue')
+ax[0, 0].plot(t_emt, y_emt, label='EMT', color=emt_color, linewidth=linewidth)
 
 t_ssm = ssm_data[('gfmi_18a_0', 'p_ref', 0.1)]["time"]
 y_ssm = ssm_data[('gfmi_18a_0', 'p_ref', 0.1)]["p"]
-ax[0, 0].plot(t_ssm, y_ssm, label='SSM', color='orange', linestyle='--')
+ax[0, 0].plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
+
+
+# Add a) text
+ax[0, 0].text(0.05, 0.95, 'a)', transform=ax[0, 0].transAxes,  va='top', ha='left')
+
+
+# Add y label
+ax[0, 0].set_ylabel("Active power [pu]")
 
 # Add an inset plot for the GFM active power
 ax_inset = ax[0, 0].inset_axes([0.46, 0.29, 0.45, 0.47])  # x0 position, y0 position, width, height
-ax_inset.plot(t_ssm, y_ssm, label='SSM', color='orange', linestyle='--')
-ax_inset.plot(t_emt, y_emt, label='EMT', color='blue')
-ax_inset.set_xlim(0.5, 1.5)
-ax_inset.set_ylim(1.33, 1.35)
+ax_inset.plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
+ax_inset.plot(t_emt, y_emt, label='EMT', color=emt_color, linewidth=linewidth)
+ax_inset.set_xlim(0.5, 1.2)
+ax_inset.set_ylim(2.15, 2.235)
 ax[0, 0].indicate_inset_zoom(ax_inset, lw=0.5)
 
 # Plot active power for GFL
 t_emt = emt_data[('gfli_16a_0', 'p_ref', 0.1)]["time"]
 y_emt = emt_data[('gfli_16a_0', 'p_ref', 0.1)]["p"]
-ax[0, 1].plot(t_emt, y_emt, label='EMT', color='blue')
+ax[0, 1].plot(t_emt, y_emt, label='EMT', color=emt_color, linewidth=linewidth)
 
 t_ssm = ssm_data[('gfli_16a_0', 'p_ref', 0.1)]["time"]
 y_ssm = ssm_data[('gfli_16a_0', 'p_ref', 0.1)]["p"]
-ax[0, 1].plot(t_ssm, y_ssm, label='SSM', color='orange', linestyle='--')
+ax[0, 1].plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
+
+# Add b) text
+ax[0, 1].text(0.05, 0.95, 'b)', transform=ax[0, 1].transAxes,  va='top', ha='left')
 
 
 # Add an inset plot for the GFL active power
 ax_inset = ax[0, 1].inset_axes([0.46, 0.29, 0.45, 0.47])  # x0 position, y0 position, width, height
-ax_inset.plot(t_emt, y_emt, label='EMT', color='blue')
-ax_inset.plot(t_ssm, y_ssm, label='SSM', color='orange', linestyle='--')
-ax_inset.set_xlim(0.5, 1.5)
-ax_inset.set_ylim(0.58, 0.62)
+ax_inset.plot(t_emt, y_emt, label='EMT', color=emt_color, linewidth=linewidth)
+ax_inset.plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
+ax_inset.set_xlim(0.5, 1.2)
+ax_inset.set_ylim(0.58, 0.615)
 ax[0, 1].indicate_inset_zoom(ax_inset, lw=0.5)
 
 # Plot voltage magnitude for the case when the GFM is excited
 t_emt = emt_data[('gfmi_18a_0', 'p_ref', 0.1)]["time"]
 y_emt = emt_data[('gfmi_18a_0', 'p_ref', 0.1)]["v"]
-ax[1, 0].plot(t_emt, y_emt, label='EMT', color='blue')
+ax[1, 0].plot(t_emt, y_emt, label='EMT', color=emt_color, linewidth=linewidth)
 
 t_ssm = ssm_data[('gfmi_18a_0', 'p_ref', 0.1)]["time"]
 y_ssm = ssm_data[('gfmi_18a_0', 'p_ref', 0.1)]["v"]
-ax[1, 0].plot(t_ssm, y_ssm, label='SSM', color='orange', linestyle='--')
+ax[1, 0].plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
 
+# Add y label
+ax[1, 0].set_ylabel("Voltage magnitude [pu]")
+
+# Add c) text
+ax[1, 0].text(0.05, 0.95, 'c)', transform=ax[1, 0].transAxes,  va='top', ha='left')
 
 # Add inset plot for the voltage magnitude when the GFM is excited
 ax_inset = ax[1, 0].inset_axes([0.49, 0.42, 0.45, 0.47])  # x0 position, y0 position, width, height
-ax_inset.plot(t_emt, y_emt, label='EMT', color='blue')
-ax_inset.plot(t_ssm, y_ssm, label='SSM', color='orange', linestyle='--')
-ax_inset.set_xlim(0.5, 1.5)
-ax_inset.set_ylim(0.979, 0.986)
+ax_inset.plot(t_emt, y_emt, label='EMT', color=emt_color, linewidth=linewidth)
+ax_inset.plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
+ax_inset.set_xlim(0.48, 1.2)
+ax_inset.set_ylim(0.981, 0.990)
 ax[1, 0].indicate_inset_zoom(ax_inset, lw=0.5)
 
 # Plot voltage magnitude for the case when the GFL is excited
 t_emt = emt_data[('gfli_16a_0', 'p_ref', 0.1)]["time"]
 y_emt = emt_data[('gfli_16a_0', 'p_ref', 0.1)]["v"]
-ax[1, 1].plot(t_emt, y_emt, label='EMT', color='blue')
+ax[1, 1].plot(t_emt, y_emt, label='EMT', color=emt_color, linewidth=linewidth)
 t_ssm = ssm_data[('gfli_16a_0', 'p_ref', 0.1)]["time"]
 y_ssm = ssm_data[('gfli_16a_0', 'p_ref', 0.1)]["v"] 
-ax[1, 1].plot(t_ssm, y_ssm, label='SSM', color='orange', linestyle='--')
+ax[1, 1].plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
+
+# Add d) text
+ax[1, 1].text(0.05, 0.95, 'd)', transform=ax[1, 1].transAxes,  va='top', ha='left')
 
 # Add inset plot for the voltage magnitude when the GFL is excited
 ax_inset = ax[1, 1].inset_axes([0.49, 0.42, 0.45, 0.47])  # x0 position, y0 position, width, height
-ax_inset.plot(t_emt, y_emt, label='EMT', color='blue')
-ax_inset.plot(t_ssm, y_ssm, label='SSM', color='orange', linestyle='--')
-ax_inset.set_xlim(0.5, 1.5)
-ax_inset.set_ylim(0.989, 0.992)
+ax_inset.plot(t_emt, y_emt, label='EMT', color=emt_color, linewidth=linewidth)
+ax_inset.plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
+ax_inset.set_xlim(0.47, 1.2)
+ax_inset.set_ylim(1.0, 1.004)
 ax[1, 1].indicate_inset_zoom(ax_inset, lw=0.5)
 
+# Plot current magnitude for the case when the GFM is excited
+t_emt = emt_data[('gfmi_18a_0', 'p_ref', 0.1)]["time"]
+y_emt = emt_data[('gfmi_18a_0', 'p_ref', 0.1)]["i"]
+ax[2, 0].plot(t_emt, y_emt, label='EMT', color=emt_color, linewidth=linewidth)
+t_ssm = ssm_data[('gfmi_18a_0', 'p_ref', 0.1)]["time"]
+y_ssm = ssm_data[('gfmi_18a_0', 'p_ref', 0.1)]["i"]
+ax[2, 0].plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
 
-ax[2, 0].plot(emt_data[('gfmi_18a_0', 'p_ref', 0.1)]["time"], emt_data[('gfmi_18a_0', 'p_ref', 0.1)]["i"], label='EMT', color='blue')
-ax[2, 0].plot(ssm_data[('gfmi_18a_0', 'p_ref', 0.1)]["time"], ssm_data[('gfmi_18a_0', 'p_ref', 0.1)]["i"], label='SSM', color='orange', linestyle='--')
+# Add y label
+ax[2, 0].set_ylabel("Current magnitude [pu]")
 
-ax[2, 1].plot(emt_data[('gfli_16a_0', 'p_ref', 0.1)]["time"], emt_data[('gfli_16a_0', 'p_ref', 0.1)]["i"], label='EMT', color='blue')
-ax[2, 1].plot(ssm_data[('gfli_16a_0', 'p_ref', 0.1)]["time"], ssm_data[('gfli_16a_0', 'p_ref', 0.1)]["i"], label='SSM', color='orange', linestyle='--')
+# Add x label
+ax[2, 0].set_xlabel("Time [s]")
+
+# Add e) text
+ax[2, 0].text(0.05, 0.95, 'e)', transform=ax[2, 0].transAxes,  va='top', ha='left')
+
+# Add inset plot for the current magnitude when the GFM is excited
+ax_inset = ax[2, 0].inset_axes([0.49, 0.30, 0.45, 0.47])  # x0 position, y0 position, width, height
+ax_inset.plot(t_emt, y_emt, label='EMT', color=emt_color, linewidth=linewidth)
+ax_inset.plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
+ax_inset.set_xlim(0.48, 1.2)
+ax_inset.set_ylim(2.16, 2.19)
+ax[2, 0].indicate_inset_zoom(ax_inset, lw=0.5)
+
+# Plot current magnitude for the case when the GFL is excited
+t_emt = emt_data[('gfli_16a_0', 'p_ref', 0.1)]["time"]
+y_emt = emt_data[('gfli_16a_0', 'p_ref', 0.1)]["i"]
+ax[2, 1].plot(t_emt, y_emt, label='EMT', color=emt_color, linewidth=linewidth)
+t_ssm = ssm_data[('gfli_16a_0', 'p_ref', 0.1)]["time"]
+y_ssm = ssm_data[('gfli_16a_0', 'p_ref', 0.1)]["i"]
+ax[2, 1].plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
+
+# Add f) text
+ax[2, 1].text(0.05, 0.95, 'f)', transform=ax[2, 1].transAxes,  va='top', ha='left')
+
+# Add x label
+ax[2, 1].set_xlabel("Time [s]")
+
+# Add inset plot for the current magnitude when the GFL is excited
+ax_inset = ax[2, 1].inset_axes([0.49, 0.30, 0.45, 0.47])  # x0 position, y0 position, width, height
+ax_inset.plot(t_emt, y_emt, label='EMT', color=emt_color, linewidth=linewidth)
+ax_inset.plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
+ax_inset.set_xlim(0.48, 1.2)
+ax_inset.set_ylim(0.62, 0.66)
+ax[2, 1].indicate_inset_zoom(ax_inset, lw=0.5)
+
+# Add legend ( - EMT, -- SSM) below the last subplot
+ax[2, 1].legend(loc='upper center', bbox_to_anchor=(-0.1, -0.32), ncol=2, frameon=False, fontsize=7)
 
 # Spacing between subplots
 fig.subplots_adjust(wspace=0.20, hspace=0.10)
 
 # Save figure
-plt.savefig(os.path.join(case_directory, "simulations", "comparison_ssm_emt.png"), dpi=1000)
+plt.savefig(os.path.join(case_directory, "simulations", "comparison_ssm_emt.pdf"), dpi=1000)

@@ -14,12 +14,16 @@ from sting.utils.tuning import line_ieeerts79
 # -------------------------------------------------------
 
 def wscc_9(case_directory=None):
+    """
+    WSCC 9-bus system with one grid-following and one grid-forming converter.
+    This system excludes the "proposed project" shown in the paper. Consequently, the GFM, bus 2 and line 2-8 are removed from that system.
+    """
+
     # Timepoint
     t1 = Timepoint(name="t1", weight=1)
 
     # Buses
     bus_1 = Bus(name="bus_1", zone="external", base_power_MVA=100, base_voltage_kV=230, base_frequency_Hz=60, minimum_voltage_pu=0.95, maximum_voltage_pu=1.05)
-    bus_2 = Bus(name="bus_2", zone=None, base_power_MVA=100, base_voltage_kV=230, base_frequency_Hz=60, minimum_voltage_pu=0.95, maximum_voltage_pu=1.05)
     bus_3 = Bus(name="bus_3", zone="external", base_power_MVA=100, base_voltage_kV=230, base_frequency_Hz=60, minimum_voltage_pu=0.95, maximum_voltage_pu=1.05)
     bus_4 = Bus(name="bus_4", zone="external", base_power_MVA=100, base_voltage_kV=230, base_frequency_Hz=60, minimum_voltage_pu=0.95, maximum_voltage_pu=1.05)
     bus_5 = Bus(name="bus_5", zone="external", base_power_MVA=100, base_voltage_kV=230, base_frequency_Hz=60, minimum_voltage_pu=0.95, maximum_voltage_pu=1.05)
@@ -47,8 +51,6 @@ def wscc_9(case_directory=None):
         name="line_6_7", from_bus="bus_6", to_bus="bus_7", zone="external", base_power_MVA=100, base_voltage_kV=230, base_frequency_Hz=60, r_pu=0.0119, x_pu=0.1008, g_pu=0, b_pu=0.209)
     line_7_8 = LinePiModel(
         name="line_7_8", from_bus="bus_7", to_bus="bus_8", zone="external", base_power_MVA=100, base_voltage_kV=230, base_frequency_Hz=60, r_pu=0.0085, x_pu=0.072, g_pu=0, b_pu=0.149)
-    line_8_2 = LinePiModel(
-        name="line_8_2", from_bus="bus_8", to_bus="bus_2", zone=None, base_power_MVA=100, base_voltage_kV=230, base_frequency_Hz=60, r_pu=0, x_pu=0.0625, g_pu=0, b_pu=0)
     line_8_9 = LinePiModel(
         name="line_8_9", from_bus="bus_8", to_bus="bus_9", zone="external", base_power_MVA=100, base_voltage_kV=230, base_frequency_Hz=60, r_pu=0.032, x_pu=0.161, g_pu=0, b_pu=0.306)
     line_9_4 = LinePiModel(
@@ -60,7 +62,7 @@ def wscc_9(case_directory=None):
     x_pu_mile = typical_parameters_per_mile["x_pu"]
     b_pu_mile = typical_parameters_per_mile["b_pu"]
 
-    for line in [line_1_4, line_4_5, line_5_6, line_3_6, line_6_7, line_7_8, line_8_2, line_8_9, line_9_4]:
+    for line in [line_1_4, line_4_5, line_5_6, line_3_6, line_6_7, line_7_8, line_8_9, line_9_4]:
 
         estimated_miles = line.x_pu / x_pu_mile
         if line.r_pu == 0:
@@ -76,7 +78,7 @@ def wscc_9(case_directory=None):
             print(f"Estimated g_pu for {line.name}: {line.g_pu:.6f}")
 
     # Print all lines
-    for line in [line_1_4, line_4_5, line_5_6, line_3_6, line_6_7, line_7_8, line_8_2, line_8_9, line_9_4]:
+    for line in [line_1_4, line_4_5, line_5_6, line_3_6, line_6_7, line_7_8, line_8_9, line_9_4]:
         print(f"{line.name}: r_pu={line.r_pu:.6f}, x_pu={line.x_pu:.6f}, g_pu={line.g_pu:.6f}, b_pu={line.b_pu:.6f}")
 
     # Generation
@@ -88,25 +90,7 @@ def wscc_9(case_directory=None):
     )
 
     gfmi_1 = GFMI18A(
-        name="gfmi_1", bus="bus_2", zone=None,
-        # Power flow 
-        minimum_active_power_MW=120, maximum_active_power_MW=140, minimum_reactive_power_MVAR=-100, maximum_reactive_power_MVAR=100,
-        cost_variable_USDperMWh=10, base_power_MVA=100, base_voltage_kV=0.48, base_frequency_Hz=60,
-        # LCL filter
-        rf1_pu=0.005, xf1_pu=0.15, csh_pu=0.066, rsh_pu=100,
-        txr_power_MVA=100, txr_voltage1_kV=0.48, txr_voltage2_kV=230, txr_r1_pu=0.01, txr_x1_pu=0.1, txr_r2_pu=0.02, txr_x2_pu=0.1, 
-        # Inner voltage controller
-        kp_vc_pu=0.562, ki_vc_puHz=484.989, kffi_vc=0.80,
-        # Inner current controller
-        kp_cc_pu=4.77, ki_cc_puHz=60, kffv_cc=0,
-        # Virtual inertia
-        h_s=2, kd_pu=70, 
-        # Voltage droop
-        k_q_pu=0.2, w_q_puHz=4000
-    )
-
-    gfmi_2 = GFMI18A(
-        name="gfmi_2", bus="bus_3", zone="external",
+        name="gfmi_1", bus="bus_3", zone="external",
         # Power flow 
         minimum_active_power_MW=200, maximum_active_power_MW=250, minimum_reactive_power_MVAR=-100, maximum_reactive_power_MVAR=100,
         cost_variable_USDperMWh=10, base_power_MVA=100, base_voltage_kV=0.48, base_frequency_Hz=60,
@@ -141,11 +125,11 @@ def wscc_9(case_directory=None):
     )
 
     system = System(case_directory=case_directory)
-    buses = [bus_1, bus_2, bus_3, bus_4, bus_5, bus_6, bus_7, bus_8, bus_9]
+    buses = [bus_1, bus_3, bus_4, bus_5, bus_6, bus_7, bus_8, bus_9]
     timepoints = [t1]
     loads = [load_1, load_2, load_3]
-    lines = [line_1_4, line_4_5, line_5_6, line_3_6, line_6_7, line_7_8, line_8_2, line_8_9, line_9_4]
-    generators = [source, gfmi_1, gfmi_2, gfli_1]
+    lines = [line_1_4, line_4_5, line_5_6, line_3_6, line_6_7, line_7_8, line_8_9, line_9_4]
+    generators = [source, gfmi_1, gfli_1]
 
     # Build grid model
     for component in buses + timepoints + loads + lines + generators:
