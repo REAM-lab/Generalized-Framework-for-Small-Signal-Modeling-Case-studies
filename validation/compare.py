@@ -12,7 +12,7 @@ import scienceplots
 # Location of all outputs
 case_directory = os.path.join(Path(__file__).resolve().parent)
 
-arbitrary_shunt_to_read ={'gfmi_18a_0': 'shunt_parallel_rc_4', 
+arbitrary_shunt_to_read ={'gfmi_18a_0': 'shunt_parallel_rc_2', 
                           'gfli_16a_0': 'shunt_parallel_rc_4',}
 
 emt_data = {}
@@ -23,7 +23,7 @@ for generator in ['gfmi_18a_0', 'gfli_16a_0']:
         #for amplitude in [0.01, 0.05, 0.1]:
         for amplitude in [0.1]:
             # Location of all outputs
-            output_directory = os.path.join(case_directory, "simulations", f"{generator}-{reference}-{int(100*amplitude)}")
+            output_directory = os.path.join(case_directory, "simulations", f"{generator}-{reference}-plus-{int(100*amplitude)}")
 
             # Read states of generator from EMT simulation
             emt_states = pl.read_csv(os.path.join(output_directory, "emt", generator + ".csv"))
