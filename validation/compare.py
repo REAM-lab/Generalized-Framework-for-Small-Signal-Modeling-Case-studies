@@ -96,7 +96,7 @@ ssm_color = blu
 #               (2,0) = GFM current magnitude, (2,1) = GFL current magnitude
 
 # Create a 3x2 grid of subplots
-fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(4.3, 4), sharex=True)
+fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(4.3, 4.3), sharex=True)
 
 # Plot active power for GFM and GFL
 t_emt = emt_data[('gfmi_18a_0', 'p_ref', 0.1)]["time"]
@@ -108,12 +108,18 @@ y_ssm = ssm_data[('gfmi_18a_0', 'p_ref', 0.1)]["p"]
 ax[0, 0].plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
 
 
+# Add header to a), c), and e) subplots
+ax[0, 0].text(0.5, 1.15, 'GFMI at bus 3', transform=ax[0, 0].transAxes,  va='top', ha='center')
+
+# Add header to a), c), and e) subplots
+ax[0, 1].text(0.5, 1.15, 'GFLI at bus 5', transform=ax[0, 1].transAxes,  va='top', ha='center')
+
+
 # Add a) text
 ax[0, 0].text(0.05, 0.95, 'a)', transform=ax[0, 0].transAxes,  va='top', ha='left')
 
-
 # Add y label
-ax[0, 0].set_ylabel("Active power [pu]")
+ax[0, 0].set_ylabel("Active power to bus [pu]")
 
 # Add an inset plot for the GFM active power
 ax_inset = ax[0, 0].inset_axes([0.46, 0.29, 0.45, 0.47])  # x0 position, y0 position, width, height
@@ -135,7 +141,6 @@ ax[0, 1].plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewi
 # Add b) text
 ax[0, 1].text(0.05, 0.95, 'b)', transform=ax[0, 1].transAxes,  va='top', ha='left')
 
-
 # Add an inset plot for the GFL active power
 ax_inset = ax[0, 1].inset_axes([0.46, 0.29, 0.45, 0.47])  # x0 position, y0 position, width, height
 ax_inset.plot(t_emt, y_emt, label='EMT', color=emt_color, linewidth=linewidth)
@@ -154,7 +159,7 @@ y_ssm = ssm_data[('gfmi_18a_0', 'p_ref', 0.1)]["v"]
 ax[1, 0].plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
 
 # Add y label
-ax[1, 0].set_ylabel("Voltage magnitude [pu]")
+ax[1, 0].set_ylabel("Bus voltage magnitude [pu]")
 
 # Add c) text
 ax[1, 0].text(0.05, 0.95, 'c)', transform=ax[1, 0].transAxes,  va='top', ha='left')
@@ -164,7 +169,7 @@ ax_inset = ax[1, 0].inset_axes([0.49, 0.42, 0.45, 0.47])  # x0 position, y0 posi
 ax_inset.plot(t_emt, y_emt, label='EMT', color=emt_color, linewidth=linewidth)
 ax_inset.plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
 ax_inset.set_xlim(0.48, 1.2)
-ax_inset.set_ylim(0.981, 0.990)
+ax_inset.set_ylim(0.991, 0.993)
 ax[1, 0].indicate_inset_zoom(ax_inset, lw=0.5)
 
 # Plot voltage magnitude for the case when the GFL is excited
@@ -195,7 +200,7 @@ y_ssm = ssm_data[('gfmi_18a_0', 'p_ref', 0.1)]["i"]
 ax[2, 0].plot(t_ssm, y_ssm, label='SSM', color=ssm_color, linestyle='--', linewidth=linewidth)
 
 # Add y label
-ax[2, 0].set_ylabel("Current magnitude [pu]")
+ax[2, 0].set_ylabel("Bus current magnitude [pu]")
 
 # Add x label
 ax[2, 0].set_xlabel("Time [s]")
@@ -234,10 +239,10 @@ ax_inset.set_ylim(0.62, 0.66)
 ax[2, 1].indicate_inset_zoom(ax_inset, lw=0.5)
 
 # Add legend ( - EMT, -- SSM) below the last subplot
-ax[2, 1].legend(loc='upper center', bbox_to_anchor=(-0.1, -0.32), ncol=2, frameon=False, fontsize=7)
+ax[2, 1].legend(loc='upper center', bbox_to_anchor=(-0.1, -0.25), ncol=2, frameon=False, fontsize=7)
 
 # Spacing between subplots
-fig.subplots_adjust(wspace=0.20, hspace=0.10)
+fig.subplots_adjust(wspace=0.20, hspace=0.17)
 
 # Save figure
 plt.savefig(os.path.join(case_directory, "simulations", "comparison_ssm_emt.pdf"), dpi=1000)
