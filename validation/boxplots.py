@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 import polars as pl
 import scienceplots
@@ -16,105 +17,73 @@ import seaborn as sns
 
 # Helper functions
 # ----------------
-def simulation_rmse(directory, file, func):
+def simulation_rmse(directory, file, col):
     """Compare SSM and EMT dynamics"""
     emt_df = pl.read_csv(os.path.join(directory, "emt", file))
-    ssm_df = pl.read_csv(os.path.join(directory, "ssm", file))
+    ssm_df = pl.read_csv(os.path.join(directory, "ssm", file)).rename({"v_lcl_sh_d":"v_sh_d","v_lcl_sh_q":"v_sh_q"}, strict=False)
 
-    return 100 * np.mean( (1 - func(ssm_df) / func(emt_df))**2 )
-
-def voltage(df:pl.DataFrame):
-    v_d = df.select("v_bus_D").to_numpy()
-    v_q = df.select("v_bus_Q").to_numpy()
-
-    return (v_d**2 + v_q**2)**0.5
-
-def current(df:pl.DataFrame):
-    i_d = df.select("i_bus_d").to_numpy()
-    i_q = df.select("i_bus_q").to_numpy()
-
-    return (i_d**2 + i_q**2)**0.5
-
-def active_power(df:pl.DataFrame):
-    try:
-        v_d = df.select("v_sh_d").to_numpy()
-        v_q = df.select("v_sh_q").to_numpy()
-    except:
-        v_d = df.select("v_lcl_sh_d").to_numpy()
-        v_q = df.select("v_lcl_sh_q").to_numpy()
-    i_d = df.select("i_bus_d").to_numpy()
-    i_q = df.select("i_bus_q").to_numpy()
-
-    return v_d*i_d + v_q*i_q
-
-def reactive_power(df:pl.DataFrame):
-    try:
-        v_d = df.select("v_sh_d").to_numpy()
-        v_q = df.select("v_sh_q").to_numpy()
-    except:
-        v_d = df.select("v_lcl_sh_d").to_numpy()
-        v_q = df.select("v_lcl_sh_q").to_numpy()
-    i_d = df.select("i_bus_d").to_numpy()
-    i_q = df.select("i_bus_q").to_numpy()
-
-    return -v_d*i_q + v_q*i_d
+    return np.mean( ((ssm_df[col] - emt_df[col])**2).to_numpy())
 
 # Process each simulation
 # -----------------------
 case_directory = os.path.join(Path(__file__).resolve().parent)
 data = []
 
+components = {
+    "shunt_parallel_rc": (8, ["v_bus_D", "v_bus_Q"]),
+    "branch_series_rl": (8, ["i_br_D", "i_br_Q"]),
+    "constant_impedance_loads": (3, ["i_bus_D", "i_bus_Q"]),
+    "gfli_16a": (1, ["i_vsc_d","i_vsc_q","v_sh_d","v_sh_q","i_bus_d","i_bus_q"]),
+    "gfmi_18a": (1, ["i_vsc_d","i_vsc_q","v_sh_d","v_sh_q","i_bus_d","i_bus_q"]),
+}
+
+# 
+
 for generator in ['gfmi_18a_0', 'gfli_16a_0']:
     for reference in ['p_ref', 'q_ref']:
         for amplitude in [-0.15, -0.10, -0.05, 0.05, 0.10, 0.15]:
             # Location of all outputs
             if amplitude < 0:
-                file_name = f"{generator}-{reference}-minus-{int(100*abs(amplitude))}"
+                simulation_name = f"{generator}-{reference}-minus-{int(100*abs(amplitude))}"
             else:
-                file_name = f"{generator}-{reference}-plus-{int(100*abs(amplitude))}"
+                simulation_name = f"{generator}-{reference}-plus-{int(100*abs(amplitude))}"
 
-            output_dir = os.path.join(case_directory, "simulations", file_name)
+            output_dir = os.path.join(case_directory, "simulations", simulation_name)
 
-            # KEYS: dataframe column name
-            # VALUES: tuples of the form (CSV file, how to process the dataframe)
-            gfm_files = {
-                "v": ("shunt_parallel_rc_2.csv", voltage),
-                "i":("gfmi_18a_0.csv", current),
-                "p": ("gfmi_18a_0.csv", active_power),
-                "q": ("gfmi_18a_0.csv", reactive_power)
-            }
+            for component, (n, cols) in components.items():
+                for i in range(n):
+                    file = f"{component}_{i}.csv"
+                    
+                    for col in cols:
+                        
+                        row = {
+                            "generator": generator, 
+                            "reference": reference, 
+                            "amplitude": f"$\pm {abs(amplitude)}$",
+                            "file": file,
+                            "column": col,
+                            "rmse":  simulation_rmse(output_dir, file, col)
+                        }
 
-            gfl_files = {
-                "v": ("shunt_parallel_rc_4.csv", voltage),
-                "i":("gfli_16a_0.csv", current),
-                "p": ("gfli_16a_0.csv", active_power),
-                "q": ("gfli_16a_0.csv", reactive_power)
-            }
+                        data.append(row)
 
-            # Basic index data to include in each row
-            index = {"generator": generator, "reference": reference, "amplitude": abs(amplitude)}
-            # Compute two rows for the dataframe
-            row1 = index | {col: simulation_rmse(output_dir, file, func) for col, (file, func) in gfm_files.items()} 
-            row2 = index | {col: simulation_rmse(output_dir, file, func) for col, (file, func) in gfl_files.items()} 
-
-            data += [row1, row2]
-
-# Mapping column names to x-axis labels
-mapping = {
-    "v":"Voltage\nmagnitude", "i":"Current\nmagnitude", "p":'Active power', "q": 'Reactive power'
-}
-
-df = (
-    pl.from_dicts(data)
-    .unpivot(on=["i", "v", "p", "q"], index="amplitude")
-    .with_columns(pl.col("variable").replace(mapping))
+df = pl.from_dicts(data)
+df = df.with_columns(
+    (   "$"
+        + pl.col("column").str.slice(0, 1)
+        + "_"
+        + pl.col("column").str.slice(-1, 1)
+        + "$"
     )
+    .str.to_lowercase()
+    .alias("State")
+)
 
 # Plotting settings
 plt.style.use(['science','ieee'])
-plt.rcParams['text.usetex'] = False
+#plt.rcParams['text.usetex'] = False
 plt.rc('font',**{'family':'serif','serif':['Times'], 'size': 7})
-plt.rcParams['axes.formatter.useoffset'] = False # this prevent scientific notation in y-axis
+#plt.rcParams['axes.formatter.useoffset'] = False # this prevent scientific notation in y-axis
 linewidth = 0.80
 
 # Color scheme 
@@ -130,29 +99,28 @@ fig, ax = plt.subplots(1, 1, figsize=(4.3, 4))
 # Create figure
 sns.boxplot(
     data=df.to_pandas(), ax=ax,
-    x="variable", y="value",
+    y="State", x="rmse",
     fill=False, color='darkgray', linewidth=0.5, zorder=1, showfliers=False)
 
 sns.swarmplot(
     data=df.to_pandas(), ax=ax,
-    x="variable", y="value", hue='amplitude', 
-    palette=holland_mint,  dodge=True, size=4, zorder=0
+    y="State", x="rmse", hue='amplitude', 
+    palette=holland_mint,  dodge=True, size=2.5, zorder=0#, size=2.5
 )
 
-sns.move_legend(ax, "upper left", ncol=3, title="Step amplitude [pu]", fancybox=False, edgecolor='k', frameon=True)
+sns.move_legend(ax, "upper right", ncol=1, title="Step\namplitude [pu]",   )
+
+ax.legend(handletextpad=0.2, title="Step\namplitude [pu]", edgecolor='k', frameon=True, fancybox=False,)
 ax.get_legend().get_frame().set_linewidth(0.5)
+ax.get_legend().get_title().set_ha("center")
+
 
 ax.set_xlabel("")
-ax.tick_params(
-        top=False,      # Show ticks on the top
-        bottom=True,   # Show ticks on the bottom
-        left=True,     # Show ticks on the left
-        right=True
-    )
 ax.tick_params(axis="x",direction="in", width=0.5)
 ax.tick_params(axis="y",direction="in", width=0.5)
-#plt.ylim(1e-9, 1)
-plt.yscale('log')
-plt.ylabel("Root mean-squared error [%]")
+ax.yaxis.set_minor_locator(plt.NullLocator())
+plt.xlim(5e-14, 1e-2)
+plt.xscale('log')
+plt.xlabel("Mean-squared error [pu]")
 
-fig.savefig(os.path.join(case_directory, "boxplot_error.pdf"))
+fig.savefig(os.path.join(case_directory, "boxplot_error_v2.pdf"))
