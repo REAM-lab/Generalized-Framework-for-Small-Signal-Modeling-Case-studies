@@ -51,6 +51,8 @@ balanced_truncation = {
     }
 # Construct a reduced-order model (ROM).
 rom = main.run_model_reduction(ssm=ssm, reductions=balanced_truncation)
+print("Number of states in the reduced-order model: ", rom.system.linear_subsystems[0].full_order_model.A.shape[0])
+print("Number of states in the reduced-order model: ", rom.system.linear_subsystems[0].reduced_order_model.A.shape[0])
 print(np.max(np.linalg.eigvals(rom.model.A).real))
 
 # COMPARE the dynamics of a step change to the voltage reference set point of the 
@@ -99,6 +101,11 @@ alpha_coef = 1000
 beta_coef = 0
 gamma_coef = 0
 mas_out = mas_output_feedback(A_c, [B_c], [C_c], [D_c], [Q], [R], [P], alpha_coef, beta_coef, gamma_coef, **solve_settings)
+
+# Print dominant eigenvalues of the closed-loop system
+eigenvalues = eigvals(mas_out.Acl_F)
+dominant_eigenvalue = eigenvalues[np.argmax(eigenvalues.real)]
+print("Dominant eigenvalues of the closed-loop system: ", dominant_eigenvalue)
 
 # Save closed-loop a matrix as csv file
 os.makedirs(os.path.join(case_directory, "outputs", "output_feedback_control"), exist_ok=True)
