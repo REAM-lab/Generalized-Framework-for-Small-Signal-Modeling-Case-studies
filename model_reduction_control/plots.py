@@ -22,7 +22,7 @@ output_directory = os.path.join(case_directory, "outputs")
 # ----------------------------------------------------------------------
 
 # Read states of EMT simulation
-emt_no_control = pl.read_csv(os.path.join(output_directory, "simulation_emt_no_control", "gfmi_18a_0.csv"))
+emt_no_control = pl.read_csv(os.path.join(output_directory, "no_control", "outputs", "simulation_emt", "gfmi_18a_0.csv"))
 
 # Read states of SSM simulation
 ssm = pl.read_csv(os.path.join(output_directory, "small_signal_model", "gfmi_18a_0.csv"))
@@ -42,11 +42,11 @@ ssm_A = pl.read_csv(os.path.join(output_directory, "small_signal_model", "A.csv"
 ssm_A = ssm_A[0:, 1:].to_numpy()
 
 # Read matrix A of the closed-loop system with output feedback control
-rom_Acl = pl.read_csv(os.path.join(output_directory, "output_feedback_control", "closed_loop_A.csv"))
+rom_Acl = pl.read_csv(os.path.join(output_directory, "closed_loop_A.csv"))
 rom_Acl = rom_Acl[0:, 0:].to_numpy()
 
 # Read states of the EMT with control implemented
-emt_with_control = pl.read_csv(os.path.join(output_directory, "simulation_emt_with_control", "gfmi_18p_0.csv"))
+emt_with_control = pl.read_csv(os.path.join(output_directory, "with_control", "outputs", "simulation_emt", "gfmi_18p_0.csv"))
 
 
 # ----------------------------------------------------------------------

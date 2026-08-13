@@ -1,24 +1,32 @@
 import os
+from pathlib import Path
+
+import control as ct
+import cvxpy as cp
 import numpy as np
 import polars as pl
 
-from sting import main, datasets
-from sting.modules.model_order_reduction.reductions import BalancedTruncation, SingularPerturbation
+# Local packages
+from cmaspy.partial_state_feedback import (
+    mas_output_feedback,
+    single_agent_output_feedback,
+)
+from scipy.linalg import eigvals, solve_continuous_are
+from sting import main
+from sting.modules.model_order_reduction.balanced_truncation import BalancedTruncation
 from sting.utils.dynamical_systems import smooth_step
-from pathlib import Path
 from wscc_9 import wscc_9
 from wscc_9_controller import wscc_9_with_controller
-from scipy.linalg import solve_continuous_are, eigvals, block_diag
-import cvxpy as cp
-from cmaspy.partial_state_feedback import single_agent_output_feedback, mas_output_feedback
+
+# ------------------------------------------------------------
+# WSCC 9 bus and simulation setup
+# ------------------------------------------------------------
 
 # Location of all outputs
 case_directory = os.path.join(Path(__file__).resolve().parent)
 
 # Load the WSCC 9 bus system from the default datasets in STING
 system = wscc_9(case_directory=case_directory)
-
-# Apply any post initialization "updates" of system components
 system.apply("post_system_init", system)
 
 # Create input signal to GFMI (proposed project)
@@ -28,51 +36,56 @@ inputs = {
         }
 }
 # Simulation length in seconds
-t_max = 2.0 
+t_max = 1.5
 
-# Run EMT simulation
-#main.run_emt(inputs=inputs, t_max=t_max, system=system, case_directory=case_directory, output_directory=os.path.join(case_directory, "outputs", "simulation_emt_no_control"))
+# ------------------------------------------------------------
+# Model-order reduction
+# ------------------------------------------------------------
 
 # Construct a small-signal model
 system, ssm = main.run_ssm(system=system, case_directory=case_directory)
-
-# Run SSM simulation
-ssm.simulate_ssm(t_max=t_max, inputs=inputs)
 
 # Create a reduced order model of all components in the zone labeled as "external".
 # We will then connect this reduced order model to the zone labeled "study", which
 # consists of a grid forming inverter (GFMI 18A) at bus 2.
 
 # Vanilla balanced truncation removing the states that are hardest to control and observe.
-# We will use the "singular perturbation" to eliminate states in order to enforce zero steady-state error
-# at the expense of accuracy in higher-frequency dynamics. 
 balanced_truncation = {
-    "external": BalancedTruncation(r=30, gramian_c="lyapunov", gramian_o="lyapunov", method="truncate")
+    "external": BalancedTruncation(r=33, method="truncate")
     }
 # Construct a reduced-order model (ROM).
 rom = main.run_model_reduction(ssm=ssm, reductions=balanced_truncation)
-print("Number of states in the reduced-order model: ", rom.system.linear_subsystems[0].full_order_model.A.shape[0])
-print("Number of states in the reduced-order model: ", rom.system.linear_subsystems[0].reduced_order_model.A.shape[0])
-print(np.max(np.linalg.eigvals(rom.model.A).real))
 
-# COMPARE the dynamics of a step change to the voltage reference set point of the 
-# grid forming inverter (GFLI 18A) at bus 2
+# Compute stats of the ROM and FOM
+ss_fom = ct.ss(*rom.system.linear_subsystems[0].full_order_model.data)
+ss_rom = ct.ss(*rom.system.linear_subsystems[0].reduced_order_model.data)
 
+print("Eigenvalue of ROM", np.max(np.linalg.eigvals(ss_rom.A).real))
+
+print("Full-order model has", ss_fom.nstates, "states")
+print("Reduced-order model (without proposed project) ", ss_rom.nstates, "states")
+print("H_2 Error", round(100 * ct.norm(ss_fom - ss_rom,p=2) / ct.norm(ss_fom, p=2),3), "%")
+print("H_inf Error", round(100 * ct.linfnorm(ss_fom - ss_rom)[0] / ct.linfnorm(ss_fom)[0], 3), "%")
+
+print("Max eigenvalue of the ROM + study area: ", np.max(np.linalg.eigvals(rom.model.A).real))
 
 # Simulate the full-order model
-#fom.output_directory = os.path.join(case_directory, "outputs", "full_order_model_simulation")
-#os.makedirs(fom.output_directory , exist_ok=True)
-#fom.simulate_ssm(t_max=t_max, inputs=inputs)
+ssm.output_directory = os.path.join(case_directory, "outputs", "small_signal_model")
+os.makedirs(ssm.output_directory , exist_ok=True)
+ssm.simulate_ssm(t_max=t_max, inputs=inputs)
 
 # Simulate the reduced-order model
 rom.output_directory = os.path.join(case_directory, "outputs", "model_order_reduction")
+os.makedirs(rom.output_directory, exist_ok=True)
 rom.simulate_ssm(t_max=t_max, inputs=inputs)
+
+# ------------------------------------------------------------
+# Output feedback control design
+# ------------------------------------------------------------
 
 # Design of the output feedback control
 # Matrix of A of ROM
 A_c = rom.model.A
-
-
 # inputs = [p_ref, q_ref, v_ref, ...]
 B_c = rom.model.B[:, 0:3] # take only p_ref, q_ref, v_ref of the GFM in the proposed project
 
@@ -86,9 +99,9 @@ C_c[4, 10] = 1 # i_bus_q
 
 D_c = np.zeros((C_c.shape[0], B_c.shape[1]))
 
-Q = 10**5*np.eye(A_c.shape[0])
+Q = 10**4*np.eye(A_c.shape[0])
 
-R = 10**3*np.eye(B_c.shape[1])
+R = 10**4*np.eye(B_c.shape[1])
 
 solve_settings = {'solver': cp.MOSEK,
                   'verbose': False}
@@ -108,18 +121,31 @@ dominant_eigenvalue = eigenvalues[np.argmax(eigenvalues.real)]
 print("Dominant eigenvalues of the closed-loop system: ", dominant_eigenvalue)
 
 # Save closed-loop a matrix as csv file
-os.makedirs(os.path.join(case_directory, "outputs", "output_feedback_control"), exist_ok=True)
 Acl_F = mas_out.Acl_F
-pl.DataFrame(Acl_F).write_csv(os.path.join(case_directory, "outputs", "output_feedback_control", "closed_loop_A.csv"))
+pl.DataFrame(Acl_F).write_csv(os.path.join(case_directory, "outputs", "closed_loop_A.csv"))
 
 
+# ------------------------------------------------------------
+# Simulate the EMT (before and after controller placement)
+# ------------------------------------------------------------
 
 # Run EMT simulation
-#system2 = wscc_9_with_controller(case_directory=case_directory)
 
+path_no_ctrl = os.path.join(case_directory, "outputs", "no_control")
+path_with_ctrl = os.path.join(case_directory, "outputs", "with_control")
+
+os.makedirs(path_no_ctrl, exist_ok=True)
+os.makedirs(path_with_ctrl, exist_ok=True)
+
+system.case_directory = path_no_ctrl
+#main.run_emt(inputs=inputs, t_max=t_max, system=system)
+
+# Run EMT simulation
+system2 = wscc_9_with_controller()
+system2.case_directory = path_with_ctrl
 # Apply any post initialization "updates" of system components
-#system2.apply("post_system_init", system2)
+system2.apply("post_system_init", system2)
+system2.gfmi_18p[0].F = mas_out.F[0]
 
 # Run EMT simulation
-#main.run_emt(inputs=inputs, t_max=2.0, system=system2, case_directory=case_directory)
-
+main.run_emt(inputs=inputs, t_max=t_max, system=system2)

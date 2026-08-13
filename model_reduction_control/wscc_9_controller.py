@@ -103,12 +103,7 @@ def wscc_9_with_controller(case_directory=None):
         # Virtual inertia
         h_s=0.15, kd_pu=0.1, 
         # Voltage droop
-        k_q_pu=0.05, w_q_puHz=2000,
-        # Controller
-        F = np.array([[-1.47612702e+00, -7.59645582e-02,  1.07872161e-03,  -6.46835727e-02, 1.63144583e-02],
-                      [-2.92246772e+04, -1.57123900e+04,  3.77223717e+02, -2.44892722e+00,  -4.01166926e+03],
-                      [1.46295833e+03,  7.85285069e+02, -1.88579344e+01, -1.80190760e-01, 2.00701122e+02]])
-                      )
+        k_q_pu=0.05, w_q_puHz=2000)
 
     gfmi_2 = GFMI18A(
         name="gfmi_2", bus="bus_3", zone="external",
