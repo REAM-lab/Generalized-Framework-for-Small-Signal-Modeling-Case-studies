@@ -101,7 +101,7 @@ D_c = np.zeros((C_c.shape[0], B_c.shape[1]))
 
 Q = 10**4*np.eye(A_c.shape[0])
 
-R = 10**4*np.eye(B_c.shape[1])
+R = 10**6*np.eye(B_c.shape[1])
 
 solve_settings = {'solver': cp.MOSEK,
                   'verbose': False}
@@ -131,14 +131,14 @@ pl.DataFrame(Acl_F).write_csv(os.path.join(case_directory, "outputs", "closed_lo
 
 # Run EMT simulation
 
-path_no_ctrl = os.path.join(case_directory, "outputs", "no_control")
-path_with_ctrl = os.path.join(case_directory, "outputs", "with_control")
+path_no_ctrl = os.path.join(case_directory, "outputs", "emt_no_control")
+path_with_ctrl = os.path.join(case_directory, "outputs", "emt_with_control")
 
 os.makedirs(path_no_ctrl, exist_ok=True)
 os.makedirs(path_with_ctrl, exist_ok=True)
 
 system.case_directory = path_no_ctrl
-#main.run_emt(inputs=inputs, t_max=t_max, system=system)
+main.run_emt(inputs=inputs, t_max=t_max, system=system)
 
 # Run EMT simulation
 system2 = wscc_9_with_controller()
