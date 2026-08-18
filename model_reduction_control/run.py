@@ -5,6 +5,7 @@ import control as ct
 import cvxpy as cp
 import numpy as np
 import polars as pl
+from sting.utils.transformations import abc2dq0
 
 # Local packages
 from cmaspy.partial_state_feedback import (
@@ -87,7 +88,7 @@ rom.simulate_ssm(t_max=t_max, inputs=inputs)
 # Matrix of A of ROM
 A_c = rom.model.A
 # inputs = [p_ref, q_ref, v_ref, ...]
-B_c = rom.model.B[:, 0:3] # take only p_ref, q_ref, v_ref of the GFM in the proposed project
+B_c = rom.model.B[:, 0:1] # take only p_ref, q_ref, v_ref of the GFM in the proposed project
 
 # outputs = []
 C_c = np.zeros((5, A_c.shape[0]))
@@ -110,7 +111,7 @@ solve_settings = {'solver': cp.MOSEK,
 P = solve_continuous_are(A_c, B_c, Q, R)
 
 # Use MAS output feedback
-alpha_coef = 1000
+alpha_coef = 100
 beta_coef = 0
 gamma_coef = 0
 mas_out = mas_output_feedback(A_c, [B_c], [C_c], [D_c], [Q], [R], [P], alpha_coef, beta_coef, gamma_coef, **solve_settings)
@@ -124,28 +125,56 @@ print("Dominant eigenvalues of the closed-loop system: ", dominant_eigenvalue)
 Acl_F = mas_out.Acl_F
 pl.DataFrame(Acl_F).write_csv(os.path.join(case_directory, "outputs", "closed_loop_A.csv"))
 
-
+breakpoint() 
 # ------------------------------------------------------------
 # Simulate the EMT (before and after controller placement)
 # ------------------------------------------------------------
 
 # Run EMT simulation
 
-path_no_ctrl = os.path.join(case_directory, "outputs", "emt_no_control")
+#path_no_ctrl = os.path.join(case_directory, "outputs", "emt_no_control")
 path_with_ctrl = os.path.join(case_directory, "outputs", "emt_with_control")
 
-os.makedirs(path_no_ctrl, exist_ok=True)
+#os.makedirs(path_no_ctrl, exist_ok=True)
 os.makedirs(path_with_ctrl, exist_ok=True)
 
-system.case_directory = path_no_ctrl
-main.run_emt(inputs=inputs, t_max=t_max, system=system)
+#system.case_directory = path_no_ctrl
+#main.run_emt(inputs=inputs, t_max=t_max, system=system)
 
 # Run EMT simulation
-system2 = wscc_9_with_controller()
+system2 = wscc_9(case_directory=case_directory)
 system2.case_directory = path_with_ctrl
 # Apply any post initialization "updates" of system components
 system2.apply("post_system_init", system2)
-system2.gfmi_18p[0].F = mas_out.F[0]
+
+
+def output_feedback_control(t: float, x: np.ndarray, id: dict):
+
+    F = mas_out.F[0]
+    w0 = 1
+    i_vsc_d0 = system2.gfmi_18a[0].lcl_filter.emt_init.i_vsc_d
+    i_vsc_q0 = system2.gfmi_18a[0].lcl_filter.emt_init.i_vsc_q
+    i_bus_d0 = system2.gfmi_18a[0].lcl_filter.emt_init.i_bus_d
+    i_bus_q0 = system2.gfmi_18a[0].lcl_filter.emt_init.i_bus_q
+
+    i_vsc_d, i_vsc_q, _ = abc2dq0(x[id['gfmi_18a_0']['i_vsc_a']], x[id['gfmi_18a_0']['i_vsc_b']], x[id['gfmi_18a_0']['i_vsc_c']], x[id['gfmi_18a_0']['angle']])
+    i_bus_d, i_bus_q, _ = abc2dq0(x[id['gfmi_18a_0']['i_bus_a']], x[id['gfmi_18a_0']['i_bus_b']], x[id['gfmi_18a_0']['i_bus_c']], x[id['gfmi_18a_0']['angle']])
+
+    delta_y = np.array([x[id['gfmi_18a_0']['w']] - w0, 
+                        i_vsc_d - i_vsc_d0, 
+                        i_vsc_q - i_vsc_q0, 
+                        i_bus_d - i_bus_d0, 
+                        i_bus_q - i_bus_q0])
+    delta_u = F @ delta_y
+
+    return delta_u[0]
+
+inputs2 = {
+    'gfmi_18a_0': {
+        'p_ref': output_feedback_control,
+        'v_ref': lambda t: smooth_step(t, step_time=0.1, initial_value=0.0, final_value=0.10, transient_width=5e-3),
+        }
+}
 
 # Run EMT simulation
-main.run_emt(inputs=inputs, t_max=t_max, system=system2)
+main.run_emt(inputs=inputs2, t_max=t_max, system=system2)
