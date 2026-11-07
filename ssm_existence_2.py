@@ -82,7 +82,6 @@ eigenvalues, eigenvectors = eig(A_new, E)
 print("Eigenvalues:\n", eigenvalues)
 
 # index reduction
-
 omega_red = np.eye(2) + B_gen_g @ np.linalg.inv(B_rc @ D_gen_g) @ np.linalg.inv(C_rc) @ D_rc @ C_gen
 A_red = np.linalg.inv(omega_red) @ (A_gen + B_gen_g @ np.linalg.inv(B_rc @ D_gen_g) @ A_rc @ np.linalg.inv(C_rc) @ D_rc @ C_gen - B_gen_g @ np.linalg.inv(B_rc @ D_gen_g) @ B_rc @ C_gen)
 
