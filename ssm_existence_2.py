@@ -1,6 +1,8 @@
 # ssm_existence.py
 # In this script, we demonstrate that the standard space-state model 
 # can fail to exist for certain parameters of a power system
+# In turn, using Lemma 3 from the paper, we can construct a descriptor model that 
+# is well-defined. 
 
 
 # -----------------------------------------
