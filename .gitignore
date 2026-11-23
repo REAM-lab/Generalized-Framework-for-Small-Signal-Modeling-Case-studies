@@ -17,6 +17,7 @@ slprj/
 *.log
 *.asv
 *.html
+*.vscode
 sting_log.txt
 *.csv
 # Ignore temp folder used for tests

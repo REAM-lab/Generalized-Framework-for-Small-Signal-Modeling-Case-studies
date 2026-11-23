@@ -1,6 +1,7 @@
-"""
-Compare the small-signal model response to the EMT response for small changes in the reference inputs.
-"""
+# This script runs step-response simulations for the WSCC 9 bus system using both small-signal and EMT models. 
+# It applies small step changes to the active and reactive power references of two generators and saves the simulation results in organized directories.
+# You will see the results in the "simulations" folder, with subfolders for each generator and reference combination, containing both small-signal and EMT simulation outputs.
+# The idea is to use those results to, then plot the comparison between the small-signal and EMT simulations using compare_ssm_vs_emt, as shown in the "comparison_no_shunt.pdf" file.
 
 # Import libraries
 import os

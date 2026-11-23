@@ -1,6 +1,6 @@
-"""
-This code script compares the small-signal model response to the EMT response for small changes in the reference inputs.
-"""
+# This script takes the simulation results from the run.py script and compares the small-signal model response to the EMT response for small changes in the reference inputs. 
+# It generates plots that illustrate the differences between the two simulation approaches, providing insights into their respective behaviors under similar conditions. 
+# The results are saved in a PDF file named "comparison_ssm_emt.pdf" within the "simulations" folder.
 
 # Import libraries
 import os

@@ -1,3 +1,17 @@
+# This script demonstrates the use of the generalized framework for small-signal modeling in a simple example without shunt elements. 
+# The system consists of a generator, two series RC shunts, and a series RL circuit. 
+# The script constructs the system-level model, computes eigenvalues, and simulates the system using Julia's OrdinaryDiffEq.jl package. 
+# Finally, it plots the results for comparison between the original and reduced system models.
+# Find this example in the Supplementary Material of the paper of this repository.
+
+# Circuit diagram:
+#
+#          +------GEN series RL branch------Bus 1------Series RL branch-------Bus 2
+#          |                                  |                                |
+#          GEN                                RC1                             RC2
+#          |                                  |                                | 
+#          ground                            ground                           ground     
+
 # -----------------------------------------
 # Import necessary libraries
 # -----------------------------------------
@@ -131,6 +145,14 @@ G = np.block([[np.eye(dg)],
 
 # Construct system-level model
 phi = np.eye(D_stack.shape[0]) - D_stack @ F
+
+# check if phi is invertible
+try:
+    inv(phi)
+except np.linalg.LinAlgError:
+    raise ValueError("Matrix (I - D_stack @ F) is not invertible.")
+
+
 E_sys = E_stack
 A_sys = (A_stack + B_stack @ F @ inv(phi) @ C_stack)
 B_sys = B_stack @ F @ phi @ D_stack @ G + B_stack @ G
@@ -198,6 +220,13 @@ G = np.block([[np.eye(dg)],
 
 # Construct system-level model for the equivalent system
 phi = np.eye(D_stack.shape[0]) - D_stack @ F
+
+# check if phi is invertible
+try:
+    inv(phi)
+except np.linalg.LinAlgError:
+    raise ValueError("Matrix (I - D_stack @ F) is not invertible.")
+
 E_sys_red = E_stack
 A_sys_red = (A_stack + B_stack @ F @ inv(phi) @ C_stack)
 B_sys_red = B_stack @ F @ phi @ D_stack @ G + B_stack @ G
@@ -213,6 +242,7 @@ print(eigvals)
 # --------------------------------------------
 
 # We use Julia OrdinaryDiffEq.jl because it has the solver Rodas5P() which is suitable for stiff systems and mass systems.
+# We tried to use Python's Scikit-SUNDAE solver but it was not able to handle the mass system properly.
 
 jl.seval("""
 using ModelingToolkit
@@ -301,10 +331,10 @@ axins.set_xlim([0.1, 0.2])
 axins.set_ylim([0.1, 0.3])
 ax.indicate_inset_zoom(axins, edgecolor="black", alpha=0.5, linewidth=0.7)
 
-
 directory = os.path.join(Path(__file__).resolve().parent)
 
 # Save figure
 plt.savefig(os.path.join(directory, "comparison_no_shunt.pdf"), dpi=1000)
 
+print("Simulation completed successfully.")
 
